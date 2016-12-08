@@ -20,7 +20,7 @@ namespace OpenVPN_WOL_RDP_script
             {
                 if (r.IsMatch(macAddr))
                 {
-                    Console.WriteLine("Valid Mac address!");
+                    //Console.WriteLine("Valid Mac address!");
                     return macAddr;
                 }
                 else
@@ -42,7 +42,12 @@ namespace OpenVPN_WOL_RDP_script
                 {
                     if (match.Success)
                     {
-                        Console.WriteLine("Good IP!");
+                        Console.WriteLine("Everything looks good!\n\nMAC:{0}\nSubnet Broadcast IP :{1}\n\n",macAddr,subnetBroadcast);
+                        Console.WriteLine("Sending WOL Packet..");
+                        string strWOLCall;
+                        strWOLCall = "/C mc-wol.exe "+ macAddr +" /a " + subnetBroadcast;
+                        System.Diagnostics.Process.Start("CMD.exe", strWOLCall);
+                        Console.WriteLine("WOL Packet sent!");
                         isValid = true;
                     }
                     else
@@ -52,16 +57,17 @@ namespace OpenVPN_WOL_RDP_script
                         match = Regex.Match(subnetBroadcast, @"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b");
                     }
                 }
-                Console.WriteLine(macAddr + "   " + subnetBroadcast);
             }
             return false;
         }
         static void Main(string[] args)
         {
-            string checkAddr = "88-AE-1D-41D-87-58";
+            string checkAddr = "88:AE:1D:41:87:58";
             //Console.WriteLine(checkMacFormat(checkAddr));
-            sendWOL(checkAddr,"192.168.1.2");
+            sendWOL(checkAddr,"10.10.0.255");
 
+            //
+            Console.Read();
         }
     }
 }
