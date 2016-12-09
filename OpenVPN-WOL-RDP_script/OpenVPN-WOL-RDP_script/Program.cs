@@ -18,11 +18,7 @@ namespace OpenVPN_WOL_RDP_script
 
             while (!isValid)
             {
-                if (r.IsMatch(macAddr))
-                {
-                    //Console.WriteLine("Valid Mac address!");
-                    return macAddr;
-                }
+                if (r.IsMatch(macAddr)) return macAddr;
                 else
                 {
                     Console.Write("Invalid Mac, try again. Mac Address : ");
@@ -60,13 +56,39 @@ namespace OpenVPN_WOL_RDP_script
             }
             return false;
         }
+
+        public static void pingPartNetwork(string range,string subnetBroadcast) {
+            var match = Regex.Match(subnetBroadcast, @"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b");
+            bool isValid = false;
+            while (!isValid)
+            {
+                if (match.Success)
+                {
+                    string[] strTmpRange = range.Split('-');
+                    string[] strTmp = subnetBroadcast.Split('.');
+                    string strFinal = strTmp[0] + "." + strTmp[1] + "." + strTmp[2] + ".";
+                    Console.WriteLine("Range = {0} - {1} ; Subnet = {2}", strTmpRange[0], strTmpRange[1], strFinal);
+                    for (int i = Convert.ToInt32(strTmpRange[0]); i < Convert.ToInt32(strTmpRange[1]); i++)
+                    {
+                        string strPingCall;
+                        strPingCall = "/C ping " + strFinal + i + " -n 1";
+                        System.Diagnostics.Process.Start("CMD.exe", strPingCall);
+                    }
+                    isValid = true;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid IP address format for network discovery.");
+                    break;
+                }
+            }
+        }
         static void Main(string[] args)
         {
             string checkAddr = "88:AE:1D:41:87:58";
             //Console.WriteLine(checkMacFormat(checkAddr));
             sendWOL(checkAddr,"10.10.0.255");
-
-            //
+            pingPartNetwork("100-200", "10.10.0.255");
             Console.Read();
         }
     }
