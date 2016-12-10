@@ -79,15 +79,13 @@ namespace OpenVPN_WOL_RDP_script
                         string[] strTmpRange = range.Split('-');
                         string[] strTmp = subnetBroadcast.Split('.');
                         string strFinal = strTmp[0] + "." + strTmp[1] + "." + strTmp[2] + ".";
-                        //Console.WriteLine("Range = {0} - {1} ; Subnet = {2}", strTmpRange[0], strTmpRange[1], strFinal);
                         for (int i = Convert.ToInt32(strTmpRange[0]); i < Convert.ToInt32(strTmpRange[1]); i++)
                         {
                             string strPingCall;
                             strPingCall = "/C ping " + strFinal + i + " -n 1";
-                            //System.Diagnostics.Process.Start("CMD.exe", strPingCall);
-                            System.Diagnostics.Process process = new System.Diagnostics.Process();
-                            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                            Process process = new Process();
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                             startInfo.FileName = "cmd.exe";
                             startInfo.Arguments = strPingCall;
                             process.StartInfo = startInfo;
@@ -108,26 +106,6 @@ namespace OpenVPN_WOL_RDP_script
                 Console.WriteLine("Could not discover all network devices. Error : {0}", ex);
             }
         }
-
-        /*public static string getIPfromMacAddr() {
-            string finalIP = "";
-
-            string strARPCall = "/C arp -a";
-            Process process = new System.Diagnostics.Process();
-            ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.FileName = "cmd.exe";
-            startInfo.Arguments = strARPCall ;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo = startInfo;
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            Console.WriteLine(output);
-            //StreamWriter wr = new StreamWriter("tmp.dat");
-
-            return finalIP;
-        } */
 
         public string getMacByIp(string ip)
         {
@@ -187,7 +165,20 @@ namespace OpenVPN_WOL_RDP_script
             return "";
         }
 
+        public static void startRDP(string macAddr) {
+            string strConnectIP = getIP(macAddr);
+            string strRDPCall;
+            strRDPCall = "/v " + strConnectIP;
+            Process process = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.FileName = "mstsc.exe";
+            startInfo.Arguments = strRDPCall;
+            process.StartInfo = startInfo;
+            process.Start();
+            Console.WriteLine("\n\nStarted RDP session for IP : {0}",strConnectIP);
 
+        }
 
         static void Main(string[] args)
         {
@@ -204,7 +195,8 @@ namespace OpenVPN_WOL_RDP_script
             worker2.Join();
             worker3.Join();
             Console.WriteLine("Network discovery done!\n");
-            sendWOL(checkAddr, "10.10.0.255");
+            sendWOL(checkAddr, broadcastIP);
+            startRDP(checkAddr);
 
 
 
