@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
 using System.IO;
+using System.Net.NetworkInformation;
 
 namespace OpenVPN_WOL_RDP_script
 {
@@ -159,25 +160,45 @@ namespace OpenVPN_WOL_RDP_script
                 if (macAddr == v.MacAddress) {
                     Console.WriteLine("Found IP : {0} for requested MAC : {1}", v.IpAddress, macAddr);
                     return v.IpAddress;
-                    break;
                 }
             }
             return "";
         }
 
         public static void startRDP(string macAddr) {
-            string strConnectIP = getIP(macAddr);
-            string strRDPCall;
-            strRDPCall = "/v " + strConnectIP;
-            Process process = new Process();
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.FileName = "mstsc.exe";
-            startInfo.Arguments = strRDPCall;
-            process.StartInfo = startInfo;
-            process.Start();
-            Console.WriteLine("\n\nStarted RDP session for IP : {0}",strConnectIP);
+            if (isReachable(getIP(macAddr)))
+            {
+                Console.WriteLine("Giving machine 20seconds to finish boot after becoming reachable.");
+                Thread.Sleep(20000);
+                string strConnectIP = getIP(macAddr);
+                string strRDPCall;
+                strRDPCall = "/v " + strConnectIP;
+                Process process = new Process();
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                startInfo.FileName = "mstsc.exe";
+                startInfo.Arguments = strRDPCall;
+                process.StartInfo = startInfo;
+                process.Start();
+                Console.WriteLine("\n\nStarted RDP session for IP : {0}", strConnectIP);
+            }
+            else {
+                Console.WriteLine("Can't start RDP, machine({0}) is not reachable", getIP(macAddr));
+            }
 
+        }
+        public static bool isReachable(string ipAddr) {
+            Console.WriteLine("Waiting for {0} to become reachable.", ipAddr);
+            Ping p = new Ping();
+            PingReply r;
+            while (true)
+            {
+                r = p.Send(ipAddr);
+                if (r.Status == IPStatus.Success) {
+                    Console.WriteLine("{0} is reachable!", ipAddr);
+                    return true;
+                }
+            }
         }
 
         static void Main(string[] args)
@@ -196,7 +217,7 @@ namespace OpenVPN_WOL_RDP_script
             worker3.Join();
             Console.WriteLine("Network discovery done!\n");
             sendWOL(checkAddr, broadcastIP);
-            startRDP(checkAddr);
+            startRDP(checkAddr); 
 
 
 
