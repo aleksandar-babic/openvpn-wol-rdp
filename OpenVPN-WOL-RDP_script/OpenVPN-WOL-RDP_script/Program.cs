@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics;
+using System.IO;
 
 namespace OpenVPN_WOL_RDP_script
 {
@@ -106,6 +108,87 @@ namespace OpenVPN_WOL_RDP_script
                 Console.WriteLine("Could not discover all network devices. Error : {0}", ex);
             }
         }
+
+        /*public static string getIPfromMacAddr() {
+            string finalIP = "";
+
+            string strARPCall = "/C arp -a";
+            Process process = new System.Diagnostics.Process();
+            ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.FileName = "cmd.exe";
+            startInfo.Arguments = strARPCall ;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo = startInfo;
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            Console.WriteLine(output);
+            //StreamWriter wr = new StreamWriter("tmp.dat");
+
+            return finalIP;
+        } */
+
+        public string getMacByIp(string ip)
+        {
+            var macIpPairs = GetAllMacAddressesAndIppairs();
+            int index = macIpPairs.FindIndex(x => x.IpAddress == ip);
+            if (index >= 0)
+            {
+                return macIpPairs[index].MacAddress.ToUpper();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public struct MacIpPair
+        {
+            public string MacAddress;
+            public string IpAddress;
+        }
+
+        public static List<MacIpPair> GetAllMacAddressesAndIppairs()
+        {
+            List<MacIpPair> mip = new List<MacIpPair>();
+            Process pProcess = new Process();
+            pProcess.StartInfo.FileName = "arp";
+            pProcess.StartInfo.Arguments = "-a ";
+            pProcess.StartInfo.UseShellExecute = false;
+            pProcess.StartInfo.RedirectStandardOutput = true;
+            pProcess.StartInfo.CreateNoWindow = true;
+            pProcess.Start();
+            string cmdOutput = pProcess.StandardOutput.ReadToEnd();
+            string pattern = @"(?<ip>([0-9]{1,3}\.?){4})\s*(?<mac>([a-f0-9]{2}-?){6})";
+
+            foreach (Match m in Regex.Matches(cmdOutput, pattern, RegexOptions.IgnoreCase))
+            {
+                mip.Add(new MacIpPair()
+                {
+                    MacAddress = m.Groups["mac"].Value,
+                    IpAddress = m.Groups["ip"].Value
+                });
+            }
+
+            return mip;
+        }
+
+        public static string getIP(string macAddr) {
+            macAddr = macAddr.Replace(" ", "-").Replace(":", "-").ToLower();
+            List<MacIpPair> tmp = GetAllMacAddressesAndIppairs();
+            foreach (var v in tmp) {
+                if (macAddr == v.MacAddress) {
+                    Console.WriteLine("Found IP : {0} for requested MAC : {1}", v.IpAddress, macAddr);
+                    return v.IpAddress;
+                    break;
+                }
+            }
+            return "";
+        }
+
+
+
         static void Main(string[] args)
         {
             string checkAddr = "88:AE:1D:41:87:58";
@@ -122,7 +205,6 @@ namespace OpenVPN_WOL_RDP_script
             worker3.Join();
             Console.WriteLine("Network discovery done!\n");
             sendWOL(checkAddr, "10.10.0.255");
-
 
 
 
