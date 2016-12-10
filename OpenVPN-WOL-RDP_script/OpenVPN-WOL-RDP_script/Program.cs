@@ -254,43 +254,44 @@ namespace OpenVPN_WOL_RDP_script
 
         static void Main(string[] args)
         {
-            if (connectToOpenVPN() != false)
+            string checkAddr = "";
+            string broadcastIP = "";
+
+            if (args.Length == 2)
             {
-                string checkAddr = "";
-                string broadcastIP = "";
-                if (args.Length == 2)
-                {
-                    checkAddr = args[0];
-                    broadcastIP = args[1];
-                }
-                else
-                {
-                    Console.WriteLine("OpenVPN - WakeOnLan - RDP script v1.0\n\nUsage : OpenVPN-WOL-RDP_script.exe <MAC Address> <IP Broadcast>\nExample : OpenVPN-WOL-RDP_script.exe 88:AE:1D:41:87:58 10.10.0.255\n\nMAC Address is physical IP address of remote pc adapter(you can get it from ipconfig /all on remote pc)\nIP Broadcast - if remote PC address is for example 10.10.0.24 your broadcast ip will be 10.10.0.255\n\n\nClose this window and try again..");
+                checkAddr = args[0];
+                broadcastIP = args[1];
+                if (connectToOpenVPN() != false)
+                {                                                
+                    if (broadcastIP != "" && checkAddr != "")
+                    {
+                        Thread worker1 = new Thread(() => pingPartNetwork("0-100", broadcastIP));
+                        Thread worker2 = new Thread(() => pingPartNetwork("101-200", broadcastIP));
+                        Thread worker3 = new Thread(() => pingPartNetwork("201-254", broadcastIP));
+                        Console.WriteLine("Starting network discovery..");
+                        worker1.Start();
+                        worker2.Start();
+                        worker3.Start();
+                        worker1.Join();
+                        worker2.Join();
+                        worker3.Join();
+                        Console.WriteLine("Network discovery done!\n");
+                        sendWOL(checkAddr, broadcastIP);
+                        startRDP(checkAddr);
+                    }
+                    Console.WriteLine("\n\n\nIf your RDP is started you can close this window by pressing any key.");
                     Console.Read();
-                    Environment.Exit(-1);
                 }
-                if (broadcastIP != "" && checkAddr != "")
-                {
-                    Thread worker1 = new Thread(() => pingPartNetwork("0-100", broadcastIP));
-                    Thread worker2 = new Thread(() => pingPartNetwork("101-200", broadcastIP));
-                    Thread worker3 = new Thread(() => pingPartNetwork("201-254", broadcastIP));
-                    Console.WriteLine("Starting network discovery..");
-                    worker1.Start();
-                    worker2.Start();
-                    worker3.Start();
-                    worker1.Join();
-                    worker2.Join();
-                    worker3.Join();
-                    Console.WriteLine("Network discovery done!\n");
-                    sendWOL(checkAddr, broadcastIP);
-                    startRDP(checkAddr);
+                else {
+                    Console.WriteLine("Could not start OpenVPN.");
                 }
-                Console.WriteLine("\n\n\nIf your RDP is started you can close this window by pressing any key.");
+            }
+            else
+            {
+                Console.WriteLine("OpenVPN - WakeOnLan - RDP script v1.0\n\nUsage : OpenVPN-WOL-RDP_script.exe <MAC Address> <IP Broadcast>\nExample : OpenVPN-WOL-RDP_script.exe 88:AE:1D:41:87:58 10.10.0.255\n\nMAC Address is physical IP address of remote pc adapter(you can get it from ipconfig /all on remote pc)\nIP Broadcast - if remote PC address is for example 10.10.0.24 your broadcast ip will be 10.10.0.255\n\n\nClose this window and try again..");
                 Console.Read();
+                Environment.Exit(-1);
             }
-            else {
-                Console.WriteLine("Could not start OpenVPN.");
-            }
-        } 
+        }
     }
 }
