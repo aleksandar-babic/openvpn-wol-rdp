@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenVPN-WOL-RDP_script", "OpenVPN-WOL-RDP_script\OpenVPN-WOL-RDP_script.csproj", "{37078A93-3ECC-4397-981A-A69E00BC2DE5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenVPNWOLRDP", "OpenVPN-WOL-RDP_script\OpenVPNWOLRDP.csproj", "{37078A93-3ECC-4397-981A-A69E00BC2DE5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
