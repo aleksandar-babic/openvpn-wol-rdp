@@ -8,6 +8,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
+using System.ServiceProcess;
 
 namespace OpenVPN_WOL_RDP_script
 {
@@ -40,7 +41,7 @@ namespace OpenVPN_WOL_RDP_script
                 {
                     var match = Regex.Match(subnetBroadcast, @"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b");
                     string args = String.Format("{0} /a {1}", macAddr, subnetBroadcast);
-                    
+                    macAddr = checkMacFormat(macAddr);
                     bool isValid = false;
                     while (!isValid)
                     {
@@ -203,38 +204,93 @@ namespace OpenVPN_WOL_RDP_script
             }
         }
 
+        public static string checkOpenVPNService() {
+            ServiceController sc = new ServiceController("OpenVPNService");
+
+            switch (sc.Status)
+            {
+                case ServiceControllerStatus.Running:
+                    return "Running";
+                case ServiceControllerStatus.Stopped:
+                    return "Stopped";
+                case ServiceControllerStatus.Paused:
+                    return "Paused";
+                case ServiceControllerStatus.StopPending:
+                    return "Stopping";
+                case ServiceControllerStatus.StartPending:
+                    return "Starting";
+                default:
+                    return "Status Changing";
+            }
+        }
+
+        public static bool connectToOpenVPN() {
+            if (checkOpenVPNService() == "Running")
+            {
+                Console.WriteLine("OpenVPN service is already running.");
+                return true;
+            }
+            else if (checkOpenVPNService() == "Stopped") {
+                Console.WriteLine("OpenVPN service is stopped.");
+                Console.WriteLine("Trying to start OpenVPN service.");
+                ServiceController sc = new ServiceController("OpenVPNService");
+                try
+                {
+                    sc.Start();
+                    Thread.Sleep(4000);
+                    if (checkOpenVPNService() == "Running")
+                    {
+                        Console.WriteLine("OpenVPN service is running.");
+                        Thread.Sleep(7000);
+                        return true;
+                    }
+                }
+                catch (Exception ex) {
+                    Console.WriteLine("Error starting OpenVPN service. Error : {0}",ex);
+                }
+            }
+            return false;
+        }
+
         static void Main(string[] args)
         {
-            string checkAddr = "";
-            string broadcastIP = "";
-            if (args.Length == 2)
+            if (connectToOpenVPN() != false)
             {
-                checkAddr = args[0];
-                broadcastIP = args[1];
+                string checkAddr = "";
+                string broadcastIP = "";
+                if (args.Length == 2)
+                {
+                    checkAddr = args[0];
+                    broadcastIP = args[1];
+                }
+                else
+                {
+                    Console.WriteLine("OpenVPN - WakeOnLan - RDP script v1.0\n\nUsage : OpenVPN-WOL-RDP_script.exe <MAC Address> <IP Broadcast>\nExample : OpenVPN-WOL-RDP_script.exe 88:AE:1D:41:87:58 10.10.0.255\n\nMAC Address is physical IP address of remote pc adapter(you can get it from ipconfig /all on remote pc)\nIP Broadcast - if remote PC address is for example 10.10.0.24 your broadcast ip will be 10.10.0.255\n\n\nClose this window and try again..");
+                    Console.Read();
+                    Environment.Exit(-1);
+                }
+                if (broadcastIP != "" && checkAddr != "")
+                {
+                    Thread worker1 = new Thread(() => pingPartNetwork("0-100", broadcastIP));
+                    Thread worker2 = new Thread(() => pingPartNetwork("101-200", broadcastIP));
+                    Thread worker3 = new Thread(() => pingPartNetwork("201-254", broadcastIP));
+                    Console.WriteLine("Starting network discovery..");
+                    worker1.Start();
+                    worker2.Start();
+                    worker3.Start();
+                    worker1.Join();
+                    worker2.Join();
+                    worker3.Join();
+                    Console.WriteLine("Network discovery done!\n");
+                    sendWOL(checkAddr, broadcastIP);
+                    startRDP(checkAddr);
+                }
+                Console.WriteLine("\n\n\nIf your RDP is started you can close this window by pressing any key.");
+                Console.Read();
             }
             else {
-                Console.WriteLine("OpenVPN - WakeOnLan - RDP script v1.0\n\nUsage : OpenVPN-WOL-RDP_script.exe <MAC Address> <IP Broadcast>\nExample : OpenVPN-WOL-RDP_script.exe 88:AE:1D:41:87:58 10.10.0.255\n\nMAC Address is physical IP address of remote pc adapter(you can get it from ipconfig /all on remote pc)\nIP Broadcast - if remote PC address is for example 10.10.0.24 your broadcast ip will be 10.10.0.255\n\n\nClose this window and try again..");
-                Console.Read();
-                Environment.Exit(-1);
+                Console.WriteLine("Could not start OpenVPN.");
             }
-            if (broadcastIP != "" && checkAddr != "")
-            {
-                Thread worker1 = new Thread(() => pingPartNetwork("0-100", broadcastIP));
-                Thread worker2 = new Thread(() => pingPartNetwork("101-200", broadcastIP));
-                Thread worker3 = new Thread(() => pingPartNetwork("201-254", broadcastIP));
-                Console.WriteLine("Starting network discovery..");
-                worker1.Start();
-                worker2.Start();
-                worker3.Start();
-                worker1.Join();
-                worker2.Join();
-                worker3.Join();
-                Console.WriteLine("Network discovery done!\n");
-                sendWOL(checkAddr, broadcastIP);
-                startRDP(checkAddr);
-            }
-            Console.WriteLine("\n\n\nIf your RDP is started you can close this window by pressing any key.");
-            Console.Read();
-        }
+        } 
     }
 }
