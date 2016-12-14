@@ -59,15 +59,5 @@ namespace OpenVPN_WOL_RDP_script.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] mc_wol {
-            get {
-                object obj = ResourceManager.GetObject("mc_wol", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

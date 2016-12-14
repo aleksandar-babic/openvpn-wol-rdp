@@ -15,6 +15,11 @@ namespace OpenVPN_WOL_RDP_script
 {
     class Program
     {
+        public static string MAC;
+        public static string IP;
+        public static string ROUTER;
+        public static string FILE;
+
         public static string checkMacFormat(string macAddr)
         {
 
@@ -48,6 +53,30 @@ namespace OpenVPN_WOL_RDP_script
             else
             {
                 return "";
+            }
+
+        }
+
+        public static void getConfig()
+        {
+
+
+            using (StreamReader reader = new StreamReader("config.ini"))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string[] tmp = line.Split('=');
+                    switch (tmp[0])
+                    {
+                        case "MAC": MAC = tmp[1]; break;
+                        case "IP": IP = tmp[1]; break;
+                        case "ROUTER": ROUTER = tmp[1]; break;
+                        case "FILE": FILE = tmp[1]; break;
+                    }
+
+                }
+
             }
 
         }
@@ -98,10 +127,15 @@ namespace OpenVPN_WOL_RDP_script
 
         }
 
-        public static bool sendWOL(string macAddr,string ip) {
-            if (((macAddr = checkMacFormat(macAddr)) != null) && (checkIPandCreateBroadcast(ip) != "")) {
+        public static bool sendWOL(string macAddr, string ip)
+
+        {
+
+            if (((macAddr = checkMacFormat(macAddr)) != null) && (checkIPandCreateBroadcast(ip) != ""))
+            {
                 string html = string.Empty;
-                string url = @"http://10.0.3.1/woltest.php?mac=" + macAddr + "&ip=" + checkIPandCreateBroadcast(ip);
+                string url = @"http://" + ROUTER + "/" + FILE + "?mac=" + macAddr + "&ip=" + checkIPandCreateBroadcast(ip);
+                Console.WriteLine(url);
                 try
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -114,13 +148,14 @@ namespace OpenVPN_WOL_RDP_script
                         html = reader.ReadToEnd();
                     }
                 }
-                catch (Exception ex) {
-                    Console.WriteLine("Error connecting to WOL server. Full error : {0}",ex);
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error connecting to WOL server. Full error : {0}\n", ex);
                     return false;
                 }
 
 
-                Console.WriteLine("Response from WOL server : {0}",html);
+                Console.WriteLine("Response from WOL server : {0}\n", html);
                 return true;
             }
 
@@ -182,18 +217,18 @@ namespace OpenVPN_WOL_RDP_script
 
         static void Main(string[] args)
         {
-            string checkAddr = "";
-            string rdpIP = "";
-
-           if (args.Length == 2)
+            getConfig();
+            string checkAddr = MAC;
+            string rdpIP = IP;
+            
+            if (checkAddr != "" && rdpIP != "")
             {
-                checkAddr = args[0];
-                rdpIP = args[1];
+
                 if (connectToOpenVPN() != false)
                 {
                     if (checkIPandCreateBroadcast(rdpIP) != "" && checkMacFormat(checkAddr) != null)
                     {
-                        sendWOL(checkAddr,rdpIP);
+                        sendWOL(checkAddr, rdpIP);
                         startRDP(rdpIP);
                         Console.WriteLine("\n\n\nIf your RDP is started you can close this window by pressing any key.");
                         Console.Read();
@@ -201,8 +236,10 @@ namespace OpenVPN_WOL_RDP_script
                     else
                         Console.WriteLine("IP or MAC invalid.");
                 }
-                else {
-                    Console.WriteLine("Could not start OpenVPN.");
+                else
+                {
+                    Console.WriteLine("Could not start OpenVPN. Make sure your OpenVPN GUI is not started and connected.\nPress any key to exit..");
+                    Console.Read();
                 }
             }
             else
