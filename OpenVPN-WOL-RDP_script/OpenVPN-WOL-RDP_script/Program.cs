@@ -101,7 +101,7 @@ namespace OpenVPN_WOL_RDP_script
         public static bool sendWOL(string macAddr,string ip) {
             if (((macAddr = checkMacFormat(macAddr)) != null) && (checkIPandCreateBroadcast(ip) != "")) {
                 string html = string.Empty;
-                string url = @"http://10.10.0.14/sendwol.php?mac=" + macAddr + "&ip=" + checkIPandCreateBroadcast(ip);
+                string url = @"http://10.0.3.1/woltest.php?mac=" + macAddr + "&ip=" + checkIPandCreateBroadcast(ip);
                 try
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
