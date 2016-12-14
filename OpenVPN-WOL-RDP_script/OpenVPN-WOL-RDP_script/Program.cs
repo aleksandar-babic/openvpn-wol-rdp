@@ -41,6 +41,7 @@ namespace OpenVPN_WOL_RDP_script
             return null;
         }
 
+
         public static string checkIPandCreateBroadcast(string ip)
         {
             Match match = Regex.Match(ip, @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
@@ -51,16 +52,14 @@ namespace OpenVPN_WOL_RDP_script
                 return ip;
             }
             else
-            {
                 return "";
-            }
+
 
         }
 
+
         public static void getConfig()
         {
-
-
             using (StreamReader reader = new StreamReader("config.ini"))
             {
                 string line;
@@ -80,6 +79,7 @@ namespace OpenVPN_WOL_RDP_script
             }
 
         }
+
 
         public static bool isReachable(string ipAddr)
         {
@@ -101,6 +101,7 @@ namespace OpenVPN_WOL_RDP_script
             }
             return false;
         }
+
 
         public static void startRDP(string ip)
         {
@@ -127,6 +128,7 @@ namespace OpenVPN_WOL_RDP_script
 
         }
 
+
         public static bool sendWOL(string macAddr, string ip)
 
         {
@@ -135,7 +137,6 @@ namespace OpenVPN_WOL_RDP_script
             {
                 string html = string.Empty;
                 string url = @"http://" + ROUTER + "/" + FILE + "?mac=" + macAddr + "&ip=" + checkIPandCreateBroadcast(ip);
-                Console.WriteLine(url);
                 try
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -184,6 +185,7 @@ namespace OpenVPN_WOL_RDP_script
             }
         }
 
+
         public static bool connectToOpenVPN()
         {
             if (checkOpenVPNService() == "Running")
@@ -215,13 +217,14 @@ namespace OpenVPN_WOL_RDP_script
             return false;
         }
 
+
         static void Main(string[] args)
         {
             getConfig();
             string checkAddr = MAC;
             string rdpIP = IP;
-            
-            if (checkAddr != "" && rdpIP != "")
+
+            if (checkAddr != "" && rdpIP != "" && ROUTER != "" && FILE != "")
             {
 
                 if (connectToOpenVPN() != false)
@@ -244,7 +247,7 @@ namespace OpenVPN_WOL_RDP_script
             }
             else
             {
-                Console.WriteLine("OpenVPN - WakeOnLan - RDP script v1.0\n\nUsage : OpenVPN-WOL-RDP_script.exe <MAC Address> <IP Address>\nExample : OpenVPN-WOL-RDP_script.exe 88:AE:1D:41:87:58 10.10.0.15\n\nMAC Address is physical IP address of remote pc adapter(you can get it from ipconfig /all on remote pc)\nIP Address is IP address of remote PC\n\n\nClose this window and try again..");
+                Console.WriteLine("OpenVPN - WakeOnLan - RDP script v1.0\n\nPopulate config.ini file in format: \nMAC=XX:XX:XX:XX:XX:XX\nIP=x.x.x.x\nROUTER=x.x.x.x\nFILE=filename.php\nPress any key to exit..");
                 Console.Read();
                 Environment.Exit(-1);
             }
