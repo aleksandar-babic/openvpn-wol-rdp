@@ -114,7 +114,6 @@ namespace OpenVPN_WOL_RDP_script
                 strRDPCall = "/v " + strConnectIP;
                 Process process = new Process();
                 ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 startInfo.FileName = "mstsc.exe";
                 startInfo.Arguments = strRDPCall;
                 process.StartInfo = startInfo;
